@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#1f4e79">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Arbeitszeit">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <title>Arbeitszeit-Rechner</title>
+  <style>
+    :root{
+      --bg:#f4f6f8;
+      --card:#ffffff;
+      --primary:#1f4e79;
+      --text:#17212b;
+      --muted:#667085;
+      --border:#d8dee6;
+      --result:#eaf3fb;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      min-height:100vh;
+    }
+    .wrap{
+      max-width:520px;
+      margin:0 auto;
+      padding:calc(22px + env(safe-area-inset-top)) 18px calc(28px + env(safe-area-inset-bottom));
+    }
+    h1{
+      font-size:28px;
+      margin:10px 0 6px;
+      letter-spacing:-0.4px;
+    }
+    .sub{
+      margin:0 0 20px;
+      color:var(--muted);
+      line-height:1.45;
+      font-size:15px;
+    }
+    .card{
+      background:var(--card);
+      border-radius:20px;
+      padding:18px;
+      box-shadow:0 8px 28px rgba(0,0,0,.06);
+    }
+    label{
+      display:block;
+      font-weight:650;
+      font-size:15px;
+      margin:15px 0 7px;
+    }
+    input, select{
+      width:100%;
+      appearance:none;
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:14px 15px;
+      font-size:18px;
+      background:#fff;
+      color:var(--text);
+      outline:none;
+    }
+    input:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(31,78,121,.12)}
+    .mode{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-bottom:6px;
+    }
+    .mode button{
+      border:1px solid var(--border);
+      background:#fff;
+      border-radius:14px;
+      padding:12px;
+      font-size:15px;
+      font-weight:650;
+      color:var(--text);
+    }
+    .mode button.active{
+      background:var(--primary);
+      color:white;
+      border-color:var(--primary);
+    }
+    .result{
+      margin-top:20px;
+      padding:18px;
+      border-radius:16px;
+      background:var(--result);
+      text-align:center;
+    }
+    .result .caption{font-size:14px;color:var(--muted);margin-bottom:5px}
+    .result .time{font-size:38px;font-weight:750;letter-spacing:-1px}
+    .formula{
+      margin-top:10px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.4;
+    }
+    .note{
+      margin-top:14px;
+      font-size:13px;
+      line-height:1.45;
+      color:var(--muted);
+      text-align:center;
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>Arbeitszeit</h1>
+    <p class="sub">5 Minuten vor Beginn und 5 Minuten nach Feierabend werden automatisch als Arbeitszeit gutgeschrieben.</p>
+
+    <section class="card">
+      <div class="mode">
+        <button id="modeStart" class="active" type="button">Beginn → Feierabend</button>
+        <button id="modeEnd" type="button">Feierabend → Beginn</button>
+      </div>
+
+      <label for="target">Soll-Arbeitszeit</label>
+      <input id="target" type="time" value="08:00" step="60">
+
+      <label id="mainLabel" for="mainTime">Arbeitsbeginn</label>
+      <input id="mainTime" type="time" value="08:00" step="60">
+
+      <label for="breakMin">Pause in Minuten</label>
+      <input id="breakMin" type="number" inputmode="numeric" min="0" step="1" value="30">
+
+      <div class="result">
+        <div class="caption" id="resultCaption">Dein Feierabend</div>
+        <div class="time" id="resultTime">16:20</div>
+        <div class="formula" id="formulaText"></div>
+      </div>
+
+      <div class="note">Berechnung: Sollzeit + Pause − 10 Minuten Gutschrift.</div>
+    </section>
+  </main>
+
+<script>
+  let mode = "start";
+  const target = document.getElementById("target");
+  const mainTime = document.getElementById("mainTime");
+  const breakMin = document.getElementById("breakMin");
+  const resultTime = document.getElementById("resultTime");
+  const resultCaption = document.getElementById("resultCaption");
+  const mainLabel = document.getElementById("mainLabel");
+  const formulaText = document.getElementById("formulaText");
+  const modeStart = document.getElementById("modeStart");
+  const modeEnd = document.getElementById("modeEnd");
+
+  function toMinutes(t){
+    if(!t || !t.includes(":")) return null;
+    const [h,m]=t.split(":").map(Number);
+    return h*60+m;
+  }
+  function formatMinutes(min){
+    min = ((min % 1440) + 1440) % 1440;
+    const h = Math.floor(min/60);
+    const m = min%60;
+    return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");
+  }
+  function formatDuration(min){
+    const h = Math.floor(min/60);
+    const m = min%60;
+    return m ? `${h} Std. ${m} Min.` : `${h} Std.`;
+  }
+  function calc(){
+    const soll = toMinutes(target.value);
+    const t = toMinutes(mainTime.value);
+    const pause = Math.max(0, parseInt(breakMin.value || "0",10));
+    if(soll===null || t===null){ resultTime.textContent="--:--"; return; }
+
+    const anwesenheit = soll + pause - 10;
+    if(mode==="start"){
+      const ende = t + anwesenheit;
+      resultCaption.textContent="Dein Feierabend";
+      resultTime.textContent=formatMinutes(ende);
+      formulaText.textContent=`${formatDuration(soll)} Sollzeit + ${pause} Min. Pause − 10 Min. Gutschrift`;
+    } else {
+      const start = t - anwesenheit;
+      resultCaption.textContent="Dein Arbeitsbeginn";
+      resultTime.textContent=formatMinutes(start);
+      formulaText.textContent=`${formatDuration(soll)} Sollzeit + ${pause} Min. Pause − 10 Min. Gutschrift`;
+    }
+    localStorage.setItem("arbeitszeit", JSON.stringify({
+      mode, target: target.value, mainTime: mainTime.value, breakMin: breakMin.value
+    }));
+  }
+
+  function setMode(newMode){
+    mode = newMode;
+    const isStart = mode==="start";
+    modeStart.classList.toggle("active", isStart);
+    modeEnd.classList.toggle("active", !isStart);
+    mainLabel.textContent = isStart ? "Arbeitsbeginn" : "Gewünschter Feierabend";
+    calc();
+  }
+
+  modeStart.addEventListener("click",()=>setMode("start"));
+  modeEnd.addEventListener("click",()=>setMode("end"));
+  [target, mainTime, breakMin].forEach(el=>el.addEventListener("input",calc));
+
+  try{
+    const saved = JSON.parse(localStorage.getItem("arbeitszeit") || "null");
+    if(saved){
+      target.value=saved.target || "08:00";
+      mainTime.value=saved.mainTime || "08:00";
+      breakMin.value=saved.breakMin ?? "30";
+      setMode(saved.mode || "start");
+    } else calc();
+  } catch(e){ calc(); }
+
+  if("serviceWorker" in navigator){
+    window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js"));
+  }
+</script>
+</body>
+</html>
