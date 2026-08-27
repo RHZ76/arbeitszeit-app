@@ -125,6 +125,17 @@
     .aboutCard button{width:100%;border:0;border-radius:14px;padding:13px;background:var(--primary);color:#fff;font-size:16px;font-weight:700}
     @media(max-width:560px){.wrap{padding-left:16px;padding-right:16px}.card{padding:16px}input,select{min-width:0;max-width:100%}input[type="time"],input[type="number"]{width:100%;min-width:0;max-width:100%;box-sizing:border-box}}
 
+
+    #target{
+      font-variant-numeric:tabular-nums;
+      letter-spacing:.02em;
+    }
+    .resetBtn{
+      touch-action:manipulation;
+      -webkit-tap-highlight-color:transparent;
+      user-select:none;
+    }
+
 </style>
 </head>
 <body>
@@ -157,7 +168,7 @@
     </section><div class="powered">powered by <strong>viacruz</strong></div>
   </main>
 <div id="menuOverlay" class="overlay" hidden><div class="sheet"><button id="aboutBtn" type="button">Über die App</button><button id="closeMenuBtn" type="button">Schließen</button></div></div>
-<div id="aboutOverlay" class="overlay" hidden><div class="aboutCard"><h2>Arbeitszeitrechner</h2><p>Beginn · Ende · Sollzeit</p><p class="version">Version 1.1.2</p><div class="aboutBrand">powered by <strong>viacruz</strong><br><button id="websiteBtn" class="websiteLink" type="button">viacruz.com</button></div><button id="closeAboutBtn" type="button">Schließen</button></div></div>
+<div id="aboutOverlay" class="overlay" hidden><div class="aboutCard"><h2>Arbeitszeitrechner</h2><p>Beginn · Ende · Sollzeit</p><p class="version">Version 1.1.3</p><div class="aboutBrand">powered by <strong>viacruz</strong><br><button id="websiteBtn" class="websiteLink" type="button">viacruz.com</button></div><button id="closeAboutBtn" type="button">Schließen</button></div></div>
 
 <script>
   let mode = "start";
@@ -170,6 +181,30 @@
   const formulaText = document.getElementById("formulaText");
   const modeStart = document.getElementById("modeStart");
   const modeEnd = document.getElementById("modeEnd");
+  function normalizeDurationInput(raw){
+    let s=(raw||"").replace(/[^\d:]/g,"").trim();
+    if(!s) return "";
+    if(/^\d{1,2}:\d{2}$/.test(s)){
+      let [h,m]=s.split(":").map(Number);
+      if(h>=0 && h<=23 && m>=0 && m<=59) return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+      return s;
+    }
+    let digits=s.replace(/\D/g,"");
+    if(digits.length<=2){
+      let h=Math.min(parseInt(digits||"0",10),23);
+      return `${String(h).padStart(2,"0")}:00`;
+    }
+    if(digits.length===3){
+      let h=parseInt(digits[0],10), m=parseInt(digits.slice(1),10);
+      if(m>59) m=59;
+      return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+    }
+    let h=parseInt(digits.slice(0,2),10), m=parseInt(digits.slice(2,4),10);
+    if(h>23) h=23;
+    if(m>59) m=59;
+    return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+  }
+
   const resetBtn=document.getElementById("resetBtn");
   const menuBtn=document.getElementById("menuBtn");
   const menuOverlay=document.getElementById("menuOverlay");
@@ -225,13 +260,36 @@
 
   modeStart.addEventListener("click",()=>setMode("start"));
   modeEnd.addEventListener("click",()=>setMode("end"));
-  [target, mainTime, breakMin].forEach(el=>el.addEventListener("input",calc));
 
-  resetBtn.addEventListener("click",()=>{
-    target.value=""; mainTime.value=""; breakMin.value="";
-    resultTime.textContent="--:--"; formulaText.textContent="";
+  target.addEventListener("input",()=>{
+    let pos=target.selectionStart;
+    let digits=target.value.replace(/\D/g,"").slice(0,4);
+    if(digits.length>=3){
+      target.value=digits.slice(0,2)+":"+digits.slice(2);
+    }else{
+      target.value=digits;
+    }
+    calc();
+  });
+  target.addEventListener("blur",()=>{
+    target.value=normalizeDurationInput(target.value);
+    calc();
+  });
+  [mainTime, breakMin].forEach(el=>el.addEventListener("input",calc));
+
+
+  let resetting=false;
+  resetBtn.addEventListener("click",(e)=>{
+    e.preventDefault();
+    if(resetting) return;
+    resetting=true;
+    target.value="";
+    mainTime.value="";
+    breakMin.value="";
+    resultTime.textContent="--:--";
+    formulaText.textContent="";
     localStorage.setItem("arbeitszeit",JSON.stringify({mode,target:"",mainTime:"",breakMin:""}));
-    target.focus();
+    requestAnimationFrame(()=>{ resetting=false; });
   });
 
   menuBtn.addEventListener("click",()=>menuOverlay.hidden=false);
