@@ -1,22 +1,345 @@
-<!doctype html><html lang='de'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1,viewport-fit=cover'><meta name='theme-color' content='#f7f7f4'><title>Zeit(z)Werk</title><link rel='manifest' href='manifest.webmanifest'><link rel='stylesheet' href='style.css?v=1.1.2f'></head><body>
-<div id='splash'><div class='powered'>powered by</div><div class='viacruz'>viacruz</div></div>
-<div id='app' class='hidden'>
-<header><div><h1>Zeit(z)Werk</h1><p>Arbeitszeit &amp; Lohn</p></div><button id='menuBtn' class='iconbtn' aria-label='Menü'>⋮</button></header>
-<main>
-<section id='overview' class='view active'><div class='hero card'><small>NOCH OFFEN</small><strong id='openPay'>0,00 €</strong><span id='openMeta'>0 Tage · 0:00 Std.</span></div><div class='grid'><div class='card'><small>DIESER MONAT</small><b id='monthHours'>0:00 Std.</b><span id='monthPay'>0,00 € gesamt</span></div><div class='card'><small>BEZAHLT</small><b id='paidPay'>0,00 €</b><span id='paidMeta'>0 Einträge</span></div></div><button class='primary big' data-nav='entry'>＋ Heute eintragen</button><h2>Letzte Einträge</h2><div id='recent'></div>
-<div class='viewPowered'>powered by <strong>viacruz</strong></div>
-</section>
-<section id='entry' class='view'><h2>Arbeitszeit eintragen</h2><form id='entryForm' class='card form'><label>Datum<input id='date' type='date' required></label><div class='twocol'><label>Beginn<input id='start' type='time' required></label><label>Ende<input id='end' type='time' required></label></div><div class='twocol'><label>Pause (Std.:Min.)<input id='pause' type='time' value='00:00' step='60' required></label><label>Stundenlohn (€)<input id='rate' type='number' min='0' step='0.01' value='15.00' required></label></div><label>Notiz<input id='note' maxlength='120' placeholder='z. B. Baustelle A'></label><div id='calc' class='calc'><span class='calcLabel'>Arbeitszeit nach Pause:</span><span class='calcValue'>00:00 Std. · 0,00 €</span></div><button class='primary' type='submit'>Eintrag speichern</button></form><div class='hint'>Mehrere Einsätze am selben Tag? Einfach einen weiteren Eintrag mit demselben Datum speichern. Die Tageswerte werden automatisch zusammengefasst.</div>
-<div class='viewPowered'>powered by <strong>viacruz</strong></div>
-</section>
-<section id='calendar' class='view'><div class='toolbar'><h2>Zeiterfassung</h2><select id='filter'><option value='all'>Alle</option><option value='open'>Offen</option><option value='billed'>Abgerechnet</option><option value='paid'>Bezahlt</option></select></div><label class='monthpick'>Monat <input id='monthFilter' type='month'></label><div id='entries'></div>
-<div class='viewPowered'>powered by <strong>viacruz</strong></div>
-</section>
-<section id='billing' class='view'><h2>Abrechnungen</h2><label class='monthpick'>Zeitraum <input id='billingMonth' type='month'></label><div class='billinggrid'><div class='card'><small>OFFEN</small><b id='billOpen'>0,00 €</b><span id='billOpenMeta'>0:00 Std.</span></div><div class='card'><small>ABGERECHNET</small><b id='billBilled'>0,00 €</b><span id='billBilledMeta'>0:00 Std.</span></div><div class='card'><small>BEZAHLT</small><b id='billPaid'>0,00 €</b><span id='billPaidMeta'>0:00 Std.</span></div></div><div id='billingDetails'></div><div class='actions'><button id='printOpen' class='secondary'>Offene als PDF / drucken</button><button id='printAll' class='secondary'>Zeitraum drucken</button></div><p class='hint'>Offen = noch nicht abgerechnet. Abgerechnet = zur Zahlung vorgemerkt. Bezahlt = erledigt und weiter in der Historie gespeichert.</p>
-<div class='viewPowered'>powered by <strong>viacruz</strong></div>
-</section>
-</main>
-<nav><button data-nav='overview' class='active'>⌂<span>Übersicht</span></button><button data-nav='entry'>＋<span>Eintragen</span></button><button data-nav='calendar'>▦<span>Kalender</span></button><button data-nav='billing'>€<span>Abrechnung</span></button></nav>
-<div id='menu' class='sheet hidden'><div class='sheetbox'><button id='backup'>Datensicherung erstellen</button><label class='filelabel'>Datensicherung wiederherstellen<input id='restore' type='file' accept='.json,application/json'></label><button id='csv'>CSV exportieren</button><button id='about'>Über die App</button><button id='closeMenu'>Schließen</button></div></div>
-<div id='aboutBox' class='sheet hidden'><div class='sheetbox about'><h2>Zeit(z)Werk</h2><p>Arbeitszeit &amp; Lohn</p><p>Version 1.1.2f</p><hr><small>powered by</small><b>viacruz</b><p><a href='https://viacruz.com' target='_blank' rel='noopener'>viacruz.com</a></p><button id='closeAbout'>Schließen</button></div></div>
-</div><script src='app.js?v=1.1.2f'></script></body></html>
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b7259">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Arbeitszeitrechner">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <title>Arbeitszeitrechner</title>
+  <style>
+    :root{
+      --bg:#f4f6f8;
+      --card:#ffffff;
+      --primary:#0b7259;
+      --text:#17212b;
+      --muted:#667085;
+      --border:#d8dee6;
+      --result:#eaf6f2;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      min-height:100vh;
+    }
+    .wrap{
+      max-width:520px;
+      margin:0 auto;
+      padding:calc(22px + env(safe-area-inset-top)) 18px calc(28px + env(safe-area-inset-bottom));
+    }
+    h1{
+      font-size:28px;
+      margin:10px 0 6px;
+      letter-spacing:-0.4px;
+    }
+    .sub{
+      margin:0 0 20px;
+      color:var(--muted);
+      line-height:1.45;
+      font-size:15px;
+    }
+    .card{
+      background:var(--card);
+      border-radius:20px;
+      padding:18px;
+      box-shadow:0 8px 28px rgba(0,0,0,.06);
+    }
+    label{
+      display:block;
+      font-weight:650;
+      font-size:15px;
+      margin:15px 0 7px;
+    }
+    input, select{
+      width:100%;
+      appearance:none;
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:14px 15px;
+      font-size:18px;
+      background:#fff;
+      color:var(--text);
+      outline:none;
+    }
+    input:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(11,114,89,.12)}
+    .mode{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-bottom:6px;
+    }
+    .mode button{
+      border:1px solid var(--border);
+      background:#fff;
+      border-radius:14px;
+      padding:12px;
+      font-size:15px;
+      font-weight:650;
+      color:var(--text);
+    }
+    .mode button.active{
+      background:var(--primary);
+      color:white;
+      border-color:var(--primary);
+    }
+    .result{
+      margin-top:20px;
+      padding:18px;
+      border-radius:16px;
+      background:var(--result);
+      text-align:center;
+    }
+    .result .caption{font-size:14px;color:var(--muted);margin-bottom:5px}
+    .result .time{font-size:38px;font-weight:750;letter-spacing:-1px}
+    .formula{
+      margin-top:10px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.4;
+    }
+    .note{
+      margin-top:14px;
+      font-size:13px;
+      line-height:1.45;
+      color:var(--muted);
+      text-align:center;
+    }
+  
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .topbar h1{margin-right:auto}
+    .menuBtn{width:42px;height:42px;flex:0 0 42px;border:0;border-radius:13px;background:#fff;color:var(--primary);font-size:20px;font-weight:800;letter-spacing:1px;box-shadow:0 4px 16px rgba(0,0,0,.06)}
+    .resetBtn{width:100%;margin-top:16px;border:1.5px solid var(--primary);border-radius:14px;padding:13px 14px;background:#fff;color:var(--primary);font-size:16px;font-weight:700}
+    .powered{text-align:center;margin-top:16px;color:var(--muted);font-size:12px}.powered strong{color:var(--primary)}
+    .overlay{position:fixed;inset:0;z-index:50;background:rgba(18,28,24,.28);display:flex;align-items:flex-end;justify-content:center;padding:18px}
+    .overlay[hidden]{display:none}.sheet{width:min(484px,100%);background:#fff;border-radius:20px;padding:8px;box-shadow:0 18px 60px rgba(0,0,0,.18);margin-bottom:calc(8px + env(safe-area-inset-bottom))}
+    .sheet button{width:100%;border:0;background:#fff;color:var(--primary);padding:16px;font-size:16px;font-weight:700;border-radius:14px}
+    .aboutCard{width:min(430px,100%);background:#fff;border-radius:22px;padding:24px;text-align:center;box-shadow:0 18px 60px rgba(0,0,0,.18);margin:auto}
+    .aboutCard h2{margin:0 0 6px;font-size:24px}.aboutCard p{margin:4px 0;color:var(--muted)}.aboutCard .version{font-size:13px}
+    .aboutBrand{margin:22px 0;color:var(--muted);font-size:14px;line-height:1.6}.aboutBrand strong{color:var(--primary)}.websiteLink{border:0;background:transparent;color:var(--primary);padding:2px 0;margin:0;font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;-webkit-appearance:none;appearance:none}
+    .aboutCard button{width:100%;border:0;border-radius:14px;padding:13px;background:var(--primary);color:#fff;font-size:16px;font-weight:700}
+    @media(max-width:560px){.wrap{padding-left:16px;padding-right:16px}.card{padding:16px}input,select{min-width:0;max-width:100%}input[type="time"],input[type="number"]{width:100%;min-width:0;max-width:100%;box-sizing:border-box}}
+
+
+    #target,#mainTime{
+      font-variant-numeric:tabular-nums;
+      letter-spacing:.02em;
+    }
+    .resetBtn{
+      touch-action:manipulation;
+      -webkit-tap-highlight-color:transparent;
+      user-select:none;
+    }
+
+
+    .splashScreen{
+      position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;
+      background:var(--bg);opacity:1;transition:opacity .35s ease;
+    }
+    .splashScreen.hide{opacity:0;pointer-events:none}
+    .splashText{color:var(--muted);font-size:18px;letter-spacing:.01em}
+    .splashText strong{color:var(--primary);font-weight:800}
+
+</style>
+</head>
+<body>
+  <div id="splashScreen" class="splashScreen">
+    <div class="splashText">powered by <strong>viacruz</strong></div>
+  </div>
+
+  <main class="wrap">
+    <div class="topbar"><h1>Arbeitszeitrechner</h1><button id="menuBtn" class="menuBtn" type="button" aria-label="Menü">•••</button></div>
+    <p class="sub">5 Minuten vor Beginn und 5 Minuten nach Feierabend werden automatisch als Arbeitszeit gutgeschrieben.</p>
+
+    <section class="card">
+      <div class="mode">
+        <button id="modeStart" class="active" type="button">Beginn → Feierabend</button>
+        <button id="modeEnd" type="button">Feierabend → Beginn</button>
+      </div>
+
+      <label for="target">Soll-Arbeitszeit</label>
+      <input id="target" type="text" inputmode="numeric" autocomplete="off" placeholder="" value="08:00" maxlength="5">
+
+      <label id="mainLabel" for="mainTime">Arbeitsbeginn</label>
+      <input id="mainTime" type="text" inputmode="numeric" autocomplete="off" placeholder="" value="08:00" maxlength="5">
+
+      <label for="breakMin">Pause in Minuten</label>
+      <input id="breakMin" type="number" inputmode="numeric" min="0" step="1" value="30">
+
+      <div class="result">
+        <div class="caption" id="resultCaption">Dein Feierabend</div>
+        <div class="time" id="resultTime">16:20</div>
+        <div class="formula" id="formulaText"></div>
+      </div>
+
+      <div class="note">Berechnung: Sollzeit + Pause − 10 Minuten Gutschrift.</div><button id="resetBtn" class="resetBtn" type="button">Zurücksetzen</button>
+    </section><div class="powered">powered by <strong>viacruz</strong></div>
+  </main>
+<div id="menuOverlay" class="overlay" hidden><div class="sheet"><button id="aboutBtn" type="button">Über die App</button><button id="closeMenuBtn" type="button">Schließen</button></div></div>
+<div id="aboutOverlay" class="overlay" hidden><div class="aboutCard"><h2>Arbeitszeitrechner</h2><p>Beginn · Ende · Sollzeit</p><p class="version">Version 1.1.6</p><div class="aboutBrand">powered by <strong>viacruz</strong><br><button id="websiteBtn" class="websiteLink" type="button">viacruz.com</button></div><button id="closeAboutBtn" type="button">Schließen</button></div></div>
+
+<script>
+  let mode = "start";
+  const target = document.getElementById("target");
+  const mainTime = document.getElementById("mainTime");
+  const breakMin = document.getElementById("breakMin");
+  const resultTime = document.getElementById("resultTime");
+  const resultCaption = document.getElementById("resultCaption");
+  const mainLabel = document.getElementById("mainLabel");
+  const formulaText = document.getElementById("formulaText");
+  const modeStart = document.getElementById("modeStart");
+  const modeEnd = document.getElementById("modeEnd");
+  function normalizeDurationInput(raw){
+    let s=(raw||"").replace(/[^\d:]/g,"").trim();
+    if(!s) return "";
+    if(/^\d{1,2}:\d{2}$/.test(s)){
+      let [h,m]=s.split(":").map(Number);
+      if(h>=0 && h<=23 && m>=0 && m<=59) return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+      return s;
+    }
+    let digits=s.replace(/\D/g,"");
+    if(digits.length<=2){
+      let h=Math.min(parseInt(digits||"0",10),23);
+      return `${String(h).padStart(2,"0")}:00`;
+    }
+    if(digits.length===3){
+      let h=parseInt(digits[0],10), m=parseInt(digits.slice(1),10);
+      if(m>59) m=59;
+      return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+    }
+    let h=parseInt(digits.slice(0,2),10), m=parseInt(digits.slice(2,4),10);
+    if(h>23) h=23;
+    if(m>59) m=59;
+    return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+  }
+
+  const resetBtn=document.getElementById("resetBtn");
+  const menuBtn=document.getElementById("menuBtn");
+  const menuOverlay=document.getElementById("menuOverlay");
+  const aboutOverlay=document.getElementById("aboutOverlay");
+
+  function toMinutes(t){
+    if(!t || !t.includes(":")) return null;
+    const [h,m]=t.split(":").map(Number);
+    return h*60+m;
+  }
+  function formatMinutes(min){
+    min = ((min % 1440) + 1440) % 1440;
+    const h = Math.floor(min/60);
+    const m = min%60;
+    return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");
+  }
+  function formatDuration(min){
+    const h = Math.floor(min/60);
+    const m = min%60;
+    return m ? `${h} Std. ${m} Min.` : `${h} Std.`;
+  }
+  function calc(){
+    const soll = toMinutes(target.value);
+    const t = toMinutes(mainTime.value);
+    const pause = Math.max(0, parseInt(breakMin.value || "0",10));
+    if(soll===null || t===null){ resultTime.textContent="--:--"; return; }
+
+    const anwesenheit = soll + pause - 10;
+    if(mode==="start"){
+      const ende = t + anwesenheit;
+      resultCaption.textContent="Dein Feierabend";
+      resultTime.textContent=formatMinutes(ende);
+      formulaText.textContent=`${formatDuration(soll)} Sollzeit + ${pause} Min. Pause − 10 Min. Gutschrift`;
+    } else {
+      const start = t - anwesenheit;
+      resultCaption.textContent="Dein Arbeitsbeginn";
+      resultTime.textContent=formatMinutes(start);
+      formulaText.textContent=`${formatDuration(soll)} Sollzeit + ${pause} Min. Pause − 10 Min. Gutschrift`;
+    }
+    localStorage.setItem("arbeitszeit", JSON.stringify({
+      mode, target: target.value, mainTime: mainTime.value, breakMin: breakMin.value
+    }));
+  }
+
+  function setMode(newMode){
+    mode = newMode;
+    const isStart = mode==="start";
+    modeStart.classList.toggle("active", isStart);
+    modeEnd.classList.toggle("active", !isStart);
+    mainLabel.textContent = isStart ? "Arbeitsbeginn" : "Gewünschter Feierabend";
+    calc();
+  }
+
+  modeStart.addEventListener("click",()=>setMode("start"));
+  modeEnd.addEventListener("click",()=>setMode("end"));
+
+  function directTimeInput(el){
+    el.addEventListener("input",()=>{
+      let digits=el.value.replace(/[^0-9]/g,"").slice(0,4);
+      if(digits.length>=3){
+        el.value=digits.slice(0,2)+":"+digits.slice(2);
+      }else{
+        el.value=digits;
+      }
+      calc();
+    });
+    el.addEventListener("blur",()=>{
+      el.value=normalizeDurationInput(el.value);
+      calc();
+    });
+  }
+  directTimeInput(target);
+  directTimeInput(mainTime);
+  breakMin.addEventListener("input",calc);
+
+
+  let resetting=false;
+  resetBtn.addEventListener("click",(e)=>{
+    e.preventDefault();
+    if(resetting) return;
+    resetting=true;
+    target.value="";
+    mainTime.value="";
+    breakMin.value="";
+    resultTime.textContent="--:--";
+    formulaText.textContent="";
+    localStorage.setItem("arbeitszeit",JSON.stringify({mode,target:"",mainTime:"",breakMin:""}));
+    requestAnimationFrame(()=>{ resetting=false; });
+  });
+
+  menuBtn.addEventListener("click",()=>menuOverlay.hidden=false);
+  document.getElementById("closeMenuBtn").addEventListener("click",()=>menuOverlay.hidden=true);
+  menuOverlay.addEventListener("click",e=>{if(e.target===menuOverlay)menuOverlay.hidden=true});
+  document.getElementById("aboutBtn").addEventListener("click",()=>{menuOverlay.hidden=true;aboutOverlay.hidden=false});
+  document.getElementById("closeAboutBtn").addEventListener("click",()=>aboutOverlay.hidden=true);
+  document.getElementById("websiteBtn").addEventListener("click",()=>{
+    window.open("https://viacruz.com","_blank","noopener,noreferrer");
+  });
+  aboutOverlay.addEventListener("click",e=>{if(e.target===aboutOverlay)aboutOverlay.hidden=true});
+
+  try{
+    const saved = JSON.parse(localStorage.getItem("arbeitszeit") || "null");
+    if(saved){
+      target.value=saved.target ?? "08:00";
+      mainTime.value=saved.mainTime ?? "08:00";
+      breakMin.value=saved.breakMin ?? "30";
+      setMode(saved.mode || "start");
+    } else calc();
+  } catch(e){ calc(); }
+
+  if("serviceWorker" in navigator){
+    window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js"));
+  }
+
+  const splashScreen=document.getElementById("splashScreen");
+  window.addEventListener("load",()=>{
+    setTimeout(()=>{
+      splashScreen.classList.add("hide");
+      setTimeout(()=>splashScreen.remove(),380);
+    },900);
+  });
+
+</script>
+</body>
+</html>
