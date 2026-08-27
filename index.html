@@ -126,7 +126,7 @@
     @media(max-width:560px){.wrap{padding-left:16px;padding-right:16px}.card{padding:16px}input,select{min-width:0;max-width:100%}input[type="time"],input[type="number"]{width:100%;min-width:0;max-width:100%;box-sizing:border-box}}
 
 
-    #target{
+    #target,#mainTime{
       font-variant-numeric:tabular-nums;
       letter-spacing:.02em;
     }
@@ -168,7 +168,7 @@
     </section><div class="powered">powered by <strong>viacruz</strong></div>
   </main>
 <div id="menuOverlay" class="overlay" hidden><div class="sheet"><button id="aboutBtn" type="button">Über die App</button><button id="closeMenuBtn" type="button">Schließen</button></div></div>
-<div id="aboutOverlay" class="overlay" hidden><div class="aboutCard"><h2>Arbeitszeitrechner</h2><p>Beginn · Ende · Sollzeit</p><p class="version">Version 1.1.3</p><div class="aboutBrand">powered by <strong>viacruz</strong><br><button id="websiteBtn" class="websiteLink" type="button">viacruz.com</button></div><button id="closeAboutBtn" type="button">Schließen</button></div></div>
+<div id="aboutOverlay" class="overlay" hidden><div class="aboutCard"><h2>Arbeitszeitrechner</h2><p>Beginn · Ende · Sollzeit</p><p class="version">Version 1.1.4</p><div class="aboutBrand">powered by <strong>viacruz</strong><br><button id="websiteBtn" class="websiteLink" type="button">viacruz.com</button></div><button id="closeAboutBtn" type="button">Schließen</button></div></div>
 
 <script>
   let mode = "start";
@@ -261,21 +261,24 @@
   modeStart.addEventListener("click",()=>setMode("start"));
   modeEnd.addEventListener("click",()=>setMode("end"));
 
-  target.addEventListener("input",()=>{
-    let pos=target.selectionStart;
-    let digits=target.value.replace(/\D/g,"").slice(0,4);
-    if(digits.length>=3){
-      target.value=digits.slice(0,2)+":"+digits.slice(2);
-    }else{
-      target.value=digits;
-    }
-    calc();
-  });
-  target.addEventListener("blur",()=>{
-    target.value=normalizeDurationInput(target.value);
-    calc();
-  });
-  [mainTime, breakMin].forEach(el=>el.addEventListener("input",calc));
+  function directTimeInput(el){
+    el.addEventListener("input",()=>{
+      let digits=el.value.replace(/[^0-9]/g,"").slice(0,4);
+      if(digits.length>=3){
+        el.value=digits.slice(0,2)+":"+digits.slice(2);
+      }else{
+        el.value=digits;
+      }
+      calc();
+    });
+    el.addEventListener("blur",()=>{
+      el.value=normalizeDurationInput(el.value);
+      calc();
+    });
+  }
+  directTimeInput(target);
+  directTimeInput(mainTime);
+  breakMin.addEventListener("input",calc);
 
 
   let resetting=false;
