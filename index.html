@@ -145,6 +145,13 @@
     .splashText{color:var(--muted);font-size:18px;letter-spacing:.01em}
     .splashText strong{color:var(--primary);font-weight:800}
 
+
+    #target::placeholder,#mainTime::placeholder{
+      color:#9aa39f;
+      opacity:1;
+      -webkit-text-fill-color:#9aa39f;
+    }
+
 </style>
 </head>
 <body>
@@ -163,10 +170,10 @@
       </div>
 
       <label for="target">Soll-Arbeitszeit</label>
-      <input id="target" type="text" inputmode="numeric" autocomplete="off" placeholder="00:00" value="08:00" maxlength="5">
+      <input id="target" type="text" inputmode="numeric" autocomplete="off" placeholder="00:00" value="" maxlength="5">
 
       <label id="mainLabel" for="mainTime">Arbeitsbeginn</label>
-      <input id="mainTime" type="text" inputmode="numeric" autocomplete="off" placeholder="00:00" value="08:00" maxlength="5">
+      <input id="mainTime" type="text" inputmode="numeric" autocomplete="off" placeholder="00:00" value="" maxlength="5">
 
       <label for="breakMin">Pause in Minuten</label>
       <input id="breakMin" type="number" inputmode="numeric" min="0" step="1" value="30">
@@ -181,7 +188,7 @@
     </section><div class="powered">powered by <strong>viacruz</strong></div>
   </main>
 <div id="menuOverlay" class="overlay" hidden><div class="sheet"><button id="aboutBtn" type="button">Über die App</button><button id="closeMenuBtn" type="button">Schließen</button></div></div>
-<div id="aboutOverlay" class="overlay" hidden><div class="aboutCard"><h2>Arbeitszeitrechner</h2><p>Beginn · Ende · Sollzeit</p><p class="version">Version 1.1.7</p><div class="aboutBrand">powered by <strong>viacruz</strong><br><button id="websiteBtn" class="websiteLink" type="button">viacruz.com</button></div><button id="closeAboutBtn" type="button">Schließen</button></div></div>
+<div id="aboutOverlay" class="overlay" hidden><div class="aboutCard"><h2>Arbeitszeitrechner</h2><p>Beginn · Ende · Sollzeit</p><p class="version">Version 1.1.8</p><div class="aboutBrand">powered by <strong>viacruz</strong><br><button id="websiteBtn" class="websiteLink" type="button">viacruz.com</button></div><button id="closeAboutBtn" type="button">Schließen</button></div></div>
 
 <script>
   let mode = "start";
@@ -321,8 +328,8 @@
   try{
     const saved = JSON.parse(localStorage.getItem("arbeitszeit") || "null");
     if(saved){
-      target.value=saved.target ?? "08:00";
-      mainTime.value=saved.mainTime ?? "08:00";
+      target.value=saved.target ?? "";
+      mainTime.value=saved.mainTime ?? "";
       breakMin.value=saved.breakMin ?? "30";
       setMode(saved.mode || "start");
     } else calc();
