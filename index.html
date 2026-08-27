@@ -3,22 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#1f4e79">
+  <meta name="theme-color" content="#0b7259">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Arbeitszeit">
+  <meta name="apple-mobile-web-app-title" content="Arbeitszeitrechner">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
-  <title>Arbeitszeit-Rechner</title>
+  <title>Arbeitszeitrechner</title>
   <style>
     :root{
       --bg:#f4f6f8;
       --card:#ffffff;
-      --primary:#1f4e79;
+      --primary:#0b7259;
       --text:#17212b;
       --muted:#667085;
       --border:#d8dee6;
-      --result:#eaf3fb;
+      --result:#eaf6f2;
     }
     *{box-sizing:border-box}
     body{
@@ -67,7 +67,7 @@
       color:var(--text);
       outline:none;
     }
-    input:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(31,78,121,.12)}
+    input:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(11,114,89,.12)}
     .mode{
       display:grid;
       grid-template-columns:1fr 1fr;
@@ -110,11 +110,26 @@
       color:var(--muted);
       text-align:center;
     }
-  </style>
+  
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .topbar h1{margin-right:auto}
+    .menuBtn{width:42px;height:42px;flex:0 0 42px;border:0;border-radius:13px;background:#fff;color:var(--primary);font-size:20px;font-weight:800;letter-spacing:1px;box-shadow:0 4px 16px rgba(0,0,0,.06)}
+    .resetBtn{width:100%;margin-top:16px;border:1.5px solid var(--primary);border-radius:14px;padding:13px 14px;background:#fff;color:var(--primary);font-size:16px;font-weight:700}
+    .powered{text-align:center;margin-top:16px;color:var(--muted);font-size:12px}.powered strong{color:var(--primary)}
+    .overlay{position:fixed;inset:0;z-index:50;background:rgba(18,28,24,.28);display:flex;align-items:flex-end;justify-content:center;padding:18px}
+    .overlay[hidden]{display:none}.sheet{width:min(484px,100%);background:#fff;border-radius:20px;padding:8px;box-shadow:0 18px 60px rgba(0,0,0,.18);margin-bottom:calc(8px + env(safe-area-inset-bottom))}
+    .sheet button{width:100%;border:0;background:#fff;color:var(--primary);padding:16px;font-size:16px;font-weight:700;border-radius:14px}
+    .aboutCard{width:min(430px,100%);background:#fff;border-radius:22px;padding:24px;text-align:center;box-shadow:0 18px 60px rgba(0,0,0,.18);margin:auto}
+    .aboutCard h2{margin:0 0 6px;font-size:24px}.aboutCard p{margin:4px 0;color:var(--muted)}.aboutCard .version{font-size:13px}
+    .aboutBrand{margin:22px 0;color:var(--muted);font-size:14px;line-height:1.6}.aboutBrand strong{color:var(--primary)}
+    .aboutCard button{width:100%;border:0;border-radius:14px;padding:13px;background:var(--primary);color:#fff;font-size:16px;font-weight:700}
+    @media(max-width:560px){.wrap{padding-left:16px;padding-right:16px}.card{padding:16px}input,select{min-width:0;max-width:100%}input[type="time"],input[type="number"]{width:100%;min-width:0;max-width:100%;box-sizing:border-box}}
+
+</style>
 </head>
 <body>
   <main class="wrap">
-    <h1>Arbeitszeit</h1>
+    <div class="topbar"><h1>Arbeitszeitrechner</h1><button id="menuBtn" class="menuBtn" type="button" aria-label="Menü">•••</button></div>
     <p class="sub">5 Minuten vor Beginn und 5 Minuten nach Feierabend werden automatisch als Arbeitszeit gutgeschrieben.</p>
 
     <section class="card">
@@ -138,9 +153,11 @@
         <div class="formula" id="formulaText"></div>
       </div>
 
-      <div class="note">Berechnung: Sollzeit + Pause − 10 Minuten Gutschrift.</div>
-    </section>
+      <div class="note">Berechnung: Sollzeit + Pause − 10 Minuten Gutschrift.</div><button id="resetBtn" class="resetBtn" type="button">Zurücksetzen</button>
+    </section><div class="powered">powered by <strong>viacruz</strong></div>
   </main>
+<div id="menuOverlay" class="overlay" hidden><div class="sheet"><button id="aboutBtn" type="button">Über die App</button><button id="closeMenuBtn" type="button">Schließen</button></div></div>
+<div id="aboutOverlay" class="overlay" hidden><div class="aboutCard"><h2>Arbeitszeitrechner</h2><p>Beginn · Ende · Sollzeit</p><p class="version">Version 1.1</p><div class="aboutBrand">powered by <strong>viacruz</strong><br><span>viacruz.com</span></div><button id="closeAboutBtn" type="button">Schließen</button></div></div>
 
 <script>
   let mode = "start";
@@ -153,6 +170,10 @@
   const formulaText = document.getElementById("formulaText");
   const modeStart = document.getElementById("modeStart");
   const modeEnd = document.getElementById("modeEnd");
+  const resetBtn=document.getElementById("resetBtn");
+  const menuBtn=document.getElementById("menuBtn");
+  const menuOverlay=document.getElementById("menuOverlay");
+  const aboutOverlay=document.getElementById("aboutOverlay");
 
   function toMinutes(t){
     if(!t || !t.includes(":")) return null;
@@ -206,11 +227,25 @@
   modeEnd.addEventListener("click",()=>setMode("end"));
   [target, mainTime, breakMin].forEach(el=>el.addEventListener("input",calc));
 
+  resetBtn.addEventListener("click",()=>{
+    target.value=""; mainTime.value=""; breakMin.value="";
+    resultTime.textContent="--:--"; formulaText.textContent="";
+    localStorage.setItem("arbeitszeit",JSON.stringify({mode,target:"",mainTime:"",breakMin:""}));
+    target.focus();
+  });
+
+  menuBtn.addEventListener("click",()=>menuOverlay.hidden=false);
+  document.getElementById("closeMenuBtn").addEventListener("click",()=>menuOverlay.hidden=true);
+  menuOverlay.addEventListener("click",e=>{if(e.target===menuOverlay)menuOverlay.hidden=true});
+  document.getElementById("aboutBtn").addEventListener("click",()=>{menuOverlay.hidden=true;aboutOverlay.hidden=false});
+  document.getElementById("closeAboutBtn").addEventListener("click",()=>aboutOverlay.hidden=true);
+  aboutOverlay.addEventListener("click",e=>{if(e.target===aboutOverlay)aboutOverlay.hidden=true});
+
   try{
     const saved = JSON.parse(localStorage.getItem("arbeitszeit") || "null");
     if(saved){
-      target.value=saved.target || "08:00";
-      mainTime.value=saved.mainTime || "08:00";
+      target.value=saved.target ?? "08:00";
+      mainTime.value=saved.mainTime ?? "08:00";
       breakMin.value=saved.breakMin ?? "30";
       setMode(saved.mode || "start");
     } else calc();

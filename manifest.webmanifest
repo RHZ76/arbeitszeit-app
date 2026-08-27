@@ -1,10 +1,10 @@
 {
-  "name": "Arbeitszeit-Rechner",
+  "name": "Arbeitszeitrechner",
   "short_name": "Arbeitszeit",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#f4f6f8",
-  "theme_color": "#1f4e79",
+  "theme_color": "#0b7259",
   "icons": [
     {
       "src": "icon-192.png",
