@@ -146,6 +146,18 @@
     .splashText strong{color:var(--primary);font-weight:800}
 
 
+    .creditPanel{margin-top:17px;border:1px solid var(--border);border-radius:14px;overflow:hidden}
+    .creditToggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;border:0;background:#fff;padding:14px;color:var(--text);font:inherit;text-align:left;cursor:pointer}
+    .creditToggle strong{display:block;font-size:15px}.creditToggle small{display:block;margin-top:4px;color:var(--muted);font-size:12px}
+    .creditTotal{white-space:nowrap;color:var(--primary);font-weight:750;font-size:14px}
+    .creditSettings{padding:0 14px 14px;border-top:1px solid var(--border)}
+    .creditSettings[hidden]{display:none}
+    .creditRow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px}
+    .creditRow label{margin:0;font-size:14px}
+    .creditRow output{font-weight:750;color:var(--primary);font-variant-numeric:tabular-nums;white-space:nowrap}
+    .creditSettings input[type=range]{appearance:auto;-webkit-appearance:auto;width:100%;padding:0;margin:10px 0 3px;border:0;box-shadow:none;accent-color:var(--primary);height:24px;cursor:pointer}
+    .creditScale{display:flex;justify-content:space-between;color:var(--muted);font-size:12px}
+    .creditApply{width:100%;margin-top:16px;padding:12px;border:0;border-radius:12px;background:var(--primary);color:white;font-size:15px;font-weight:700}
     #target::placeholder,#mainTime::placeholder{
       color:#9aa39f;
       opacity:1;
@@ -161,7 +173,7 @@
 
   <main class="wrap">
     <div class="topbar"><h1>Arbeitszeitrechner</h1><button id="menuBtn" class="menuBtn" type="button" aria-label="Menü">•••</button></div>
-    <p class="sub">5 Minuten vor Beginn und 5 Minuten nach Feierabend werden automatisch als Arbeitszeit gutgeschrieben.</p>
+    <p class="sub">Die einstellbare Zeitgutschrift vor Arbeitsbeginn und nach Feierabend wird automatisch berücksichtigt.</p>
 
     <section class="card">
       <div class="mode">
@@ -178,17 +190,33 @@
       <label for="breakMin">Pause in Minuten</label>
       <input id="breakMin" type="number" inputmode="numeric" min="0" step="1" value="30">
 
+      <div class="creditPanel">
+        <button id="creditToggle" class="creditToggle" type="button" aria-expanded="false" aria-controls="creditSettings">
+          <span><strong>Zeitgutschrift</strong><small id="creditSummary">5 Min. vor Beginn · 5 Min. nach Ende</small></span>
+          <span class="creditTotal"><span id="creditTotal">10 Min.</span> <span id="creditArrow" aria-hidden="true">⌄</span></span>
+        </button>
+        <div id="creditSettings" class="creditSettings" hidden>
+          <div class="creditRow"><label for="creditBefore">Vor Arbeitsbeginn</label><output id="creditBeforeValue" for="creditBefore">5 Min.</output></div>
+          <input id="creditBefore" type="range" min="0" max="15" step="1" value="5">
+          <div class="creditScale"><span>0 Min.</span><span>15 Min.</span></div>
+          <div class="creditRow"><label for="creditAfter">Nach Arbeitsende</label><output id="creditAfterValue" for="creditAfter">5 Min.</output></div>
+          <input id="creditAfter" type="range" min="0" max="15" step="1" value="5">
+          <div class="creditScale"><span>0 Min.</span><span>15 Min.</span></div>
+          <button id="creditApply" class="creditApply" type="button">Übernehmen</button>
+        </div>
+      </div>
+
       <div class="result">
         <div class="caption" id="resultCaption">Dein Feierabend</div>
         <div class="time" id="resultTime">16:20</div>
         <div class="formula" id="formulaText"></div>
       </div>
 
-      <div class="note">Berechnung: Sollzeit + Pause − 10 Minuten Gutschrift.</div><button id="resetBtn" class="resetBtn" type="button">Zurücksetzen</button>
+      <div class="note">Berechnung: Sollzeit + Pause − eingestellte Zeitgutschrift.</div><button id="resetBtn" class="resetBtn" type="button">Zurücksetzen</button>
     </section><div class="powered">powered by <strong>viacruz</strong></div>
   </main>
 <div id="menuOverlay" class="overlay" hidden><div class="sheet"><button id="aboutBtn" type="button">Über die App</button><button id="closeMenuBtn" type="button">Schließen</button></div></div>
-<div id="aboutOverlay" class="overlay" hidden><div class="aboutCard"><h2>Arbeitszeitrechner</h2><p>Beginn · Ende · Sollzeit</p><p class="version">Version 1.1.8</p><div class="aboutBrand">powered by <strong>viacruz</strong><br><button id="websiteBtn" class="websiteLink" type="button">viacruz.com</button></div><button id="closeAboutBtn" type="button">Schließen</button></div></div>
+<div id="aboutOverlay" class="overlay" hidden><div class="aboutCard"><h2>Arbeitszeitrechner</h2><p>Beginn · Ende · Sollzeit</p><p class="version">Version 1.1.9</p><div class="aboutBrand">powered by <strong>viacruz</strong><br><button id="websiteBtn" class="websiteLink" type="button">viacruz.com</button></div><button id="closeAboutBtn" type="button">Schließen</button></div></div>
 
 <script>
   let mode = "start";
@@ -199,6 +227,30 @@
   const resultCaption = document.getElementById("resultCaption");
   const mainLabel = document.getElementById("mainLabel");
   const formulaText = document.getElementById("formulaText");
+  const creditBefore=document.getElementById("creditBefore");
+  const creditAfter=document.getElementById("creditAfter");
+  const creditToggle=document.getElementById("creditToggle");
+  const creditSettings=document.getElementById("creditSettings");
+  function creditMinutes(){return Number(creditBefore.value)+Number(creditAfter.value)}
+  function updateCreditDisplay(){
+    const before=Number(creditBefore.value),after=Number(creditAfter.value);
+    document.getElementById("creditBeforeValue").textContent=`${before} Min.`;
+    document.getElementById("creditAfterValue").textContent=`${after} Min.`;
+    document.getElementById("creditSummary").textContent=`${before} Min. vor Beginn · ${after} Min. nach Ende`;
+    document.getElementById("creditTotal").textContent=`${before+after} Min.`;
+  }
+  function clampCredit(value){const n=Number(value);return Number.isFinite(n)?Math.max(0,Math.min(15,Math.round(n))):5}
+  creditToggle.addEventListener("click",()=>{
+    creditSettings.hidden=!creditSettings.hidden;
+    creditToggle.setAttribute("aria-expanded",String(!creditSettings.hidden));
+    document.getElementById("creditArrow").textContent=creditSettings.hidden?"⌄":"⌃";
+  });
+  document.getElementById("creditApply").addEventListener("click",()=>{
+    creditSettings.hidden=true;
+    creditToggle.setAttribute("aria-expanded","false");
+    document.getElementById("creditArrow").textContent="⌄";
+  });
+  for(const el of [creditBefore,creditAfter])el.addEventListener("input",()=>{updateCreditDisplay();calc()});
   const modeStart = document.getElementById("modeStart");
   const modeEnd = document.getElementById("modeEnd");
   function normalizeDurationInput(raw){
@@ -246,27 +298,37 @@
     const m = min%60;
     return m ? `${h} Std. ${m} Min.` : `${h} Std.`;
   }
+  function saveSettings(){
+    localStorage.setItem("arbeitszeit",JSON.stringify({
+      mode,target:target.value,mainTime:mainTime.value,breakMin:breakMin.value,
+      creditBefore:Number(creditBefore.value),creditAfter:Number(creditAfter.value)
+    }));
+  }
   function calc(){
     const soll = toMinutes(target.value);
     const t = toMinutes(mainTime.value);
     const pause = Math.max(0, parseInt(breakMin.value || "0",10));
-    if(soll===null || t===null){ resultTime.textContent="--:--"; return; }
+    if(soll===null || t===null){
+      resultTime.textContent="--:--";
+      formulaText.textContent="";
+      saveSettings();
+      return;
+    }
 
-    const anwesenheit = soll + pause - 10;
+    const gutschrift=creditMinutes();
+    const anwesenheit = soll + pause - gutschrift;
     if(mode==="start"){
       const ende = t + anwesenheit;
       resultCaption.textContent="Dein Feierabend";
       resultTime.textContent=formatMinutes(ende);
-      formulaText.textContent=`${formatDuration(soll)} Sollzeit + ${pause} Min. Pause − 10 Min. Gutschrift`;
+      formulaText.textContent=`${formatDuration(soll)} Sollzeit + ${pause} Min. Pause − ${gutschrift} Min. Gutschrift`;
     } else {
       const start = t - anwesenheit;
       resultCaption.textContent="Dein Arbeitsbeginn";
       resultTime.textContent=formatMinutes(start);
-      formulaText.textContent=`${formatDuration(soll)} Sollzeit + ${pause} Min. Pause − 10 Min. Gutschrift`;
+      formulaText.textContent=`${formatDuration(soll)} Sollzeit + ${pause} Min. Pause − ${gutschrift} Min. Gutschrift`;
     }
-    localStorage.setItem("arbeitszeit", JSON.stringify({
-      mode, target: target.value, mainTime: mainTime.value, breakMin: breakMin.value
-    }));
+    saveSettings();
   }
 
   function setMode(newMode){
@@ -311,7 +373,8 @@
     breakMin.value="";
     resultTime.textContent="--:--";
     formulaText.textContent="";
-    localStorage.setItem("arbeitszeit",JSON.stringify({mode,target:"",mainTime:"",breakMin:""}));
+    localStorage.setItem("arbeitszeit",JSON.stringify({mode,target:"",mainTime:"",breakMin:"",
+      creditBefore:Number(creditBefore.value),creditAfter:Number(creditAfter.value)}));
     requestAnimationFrame(()=>{ resetting=false; });
   });
 
@@ -331,9 +394,12 @@
       target.value=saved.target ?? "";
       mainTime.value=saved.mainTime ?? "";
       breakMin.value=saved.breakMin ?? "30";
+      creditBefore.value=clampCredit(saved.creditBefore ?? 5);
+      creditAfter.value=clampCredit(saved.creditAfter ?? 5);
+      updateCreditDisplay();
       setMode(saved.mode || "start");
-    } else calc();
-  } catch(e){ calc(); }
+    } else {updateCreditDisplay();calc();}
+  } catch(e){updateCreditDisplay();calc();}
 
   if("serviceWorker" in navigator){
     window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js"));
